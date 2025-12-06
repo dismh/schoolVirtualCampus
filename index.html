@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Dual Video Reverse/Forward Playback</title>
+</head>
+
+<body class="bg-gray-900 h-screen w-screen flex items-center justify-center">
+  <div id="videoContainer" class="relative w-full h-full">
+    <button id="pOfficeCorridoor"
+      class="hidden absolute bottom-[20vh] right-[10vw] z-20 px-4 py-2 bg-blue-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg shadow-black/50 hover:scale-105 active:scale-95 flex items-center gap-2">
+      <span class="text-lg">▲</span>
+    </button>
+
+
+    <!-- Forward Video -->
+    <video id="forwardVid" class="w-full h-full object-cover absolute inset-0 hidden" src="videos/reception/forward.mp4"
+      muted></video>
+
+    <!-- Reversed Video -->
+    <video id="reverseVid" class="w-full h-full object-cover absolute inset-0 hidden" src="videos/reception/reverse.mp4"
+      muted></video>
+
+    <!-- Rewind Button -->
+    <button id="rewindBtn"
+      class="absolute left-5 top-1/2 -translate-y-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg select-none hidden"><--
+        </button>
+
+        <!-- Forward Button -->
+        <button id="playBtn"
+          class="absolute right-5 top-1/2 -translate-y-1/2 bg-gray-700 text-white px-4 py-2 rounded-lg select-none hidden">--></button>
+
+        <div class="ui hidden absolute top-5 left-5 h-auto w-[20vw] 
+    flex flex-col backdrop-blur-xl bg-white/10 border border-white/10
+    rounded-2xl shadow-xl shadow-black/40 p-4">
+
+          <h1 class="text-center text-xl font-semibold text-white tracking-wide mb-3">
+            Travel to
+          </h1>
+
+          <ul class="space-y-2 text-white/80 text-base">
+            <li class="group cursor-pointer transition-all duration-200">
+              <span class="group-hover:text-white group-hover:scale-[1.02] inline-block transition-all duration-200">
+                IT Lab
+              </span>
+              <div class="h-[2px] w-0 bg-white/80 group-hover:w-full transition-all duration-300"></div>
+            </li>
+
+            <li class="group cursor-pointer transition-all duration-200">
+              <span class="group-hover:text-white group-hover:scale-[1.02] inline-block transition-all duration-200">
+                Robotics Lab
+              </span>
+              <div class="h-[2px] w-0 bg-white/80 group-hover:w-full transition-all duration-300"></div>
+            </li>
+
+            <li class="group cursor-pointer transition-all duration-200">
+              <span class="group-hover:text-white group-hover:scale-[1.02] inline-block transition-all duration-200">
+                Auditorium
+              </span>
+              <div class="h-[2px] w-0 bg-white/80 group-hover:w-full transition-all duration-300"></div>
+            </li>
+          </ul>
+
+        </div>
+
+        <!-- START Button -->
+        <button id="startBtn"
+          class="absolute inset-0 m-auto h-14 w-32 bg-white/20 text-white text-lg rounded-xl backdrop-blur-sm">START</button>
+
+  </div>
+
+  <script>
+    const container = document.getElementById("videoContainer");
+    const fVid = document.getElementById("forwardVid");
+    const rVid = document.getElementById("reverseVid");
+    const playBtn = document.getElementById("playBtn");
+    const rewindBtn = document.getElementById("rewindBtn");
+    const startBtn = document.getElementById("startBtn");
+    const principalOfficeCorridoorButton = document.querySelector("#pOfficeCorridoor")
+    const ui = document.querySelector(".ui");
+    let durationLoaded = false;
+    let videoDuration = 0;
+
+    /* Load duration */
+    fVid.addEventListener("loadedmetadata", () => {
+      videoDuration = fVid.duration;
+      durationLoaded = true;
+    });
+    rVid.addEventListener("loadedmetadata", () => {
+      if (!durationLoaded) {
+        videoDuration = rVid.duration;
+        durationLoaded = true;
+      }
+    });
+
+    function showForwardVideo() {
+      rVid.classList.add("hidden");
+      fVid.classList.remove("hidden");
+    }
+
+    function showReverseVideo() {
+      fVid.classList.add("hidden");
+      rVid.classList.remove("hidden");
+    }
+
+    /* START BUTTON LOGIC */
+    startBtn.addEventListener("click", () => {
+      // Go fullscreen
+      if (container.requestFullscreen) container.requestFullscreen();
+      else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+
+      // Hide start button
+      startBtn.classList.add("hidden");
+
+      // Show controls
+      playBtn.classList.remove("hidden");
+      rewindBtn.classList.remove("hidden");
+      principalOfficeCorridoorButton.classList.remove("hidden");
+
+      // Show forward video initially
+      fVid.classList.remove("hidden");
+      ui.classList.remove("hidden");
+    });
+
+    /* Detect mobile */
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+    /* Forward Logic */
+    let xPos = 0;
+    let moveAnimation; // will store requestAnimationFrame id
+
+    function moveButtonContinuously(vidType) {
+      // Set speed based on device
+      const speed = isMobile ? 2 : 4; // slower on mobile
+
+      if (vidType === "rVid") {
+        xPos += speed; // speed in pixels per frame
+        principalOfficeCorridoorButton.style.transform = `translateX(${xPos}px)`;
+        moveAnimation = requestAnimationFrame(() => moveButtonContinuously("rVid"));
+      } else if (vidType === "fVid") {
+        xPos -= speed; // speed in pixels per frame
+        principalOfficeCorridoorButton.style.transform = `translateX(${xPos}px)`;
+        moveAnimation = requestAnimationFrame(() => moveButtonContinuously("fVid"));
+      }
+    }
+
+    function forwardStart() {
+      if (!durationLoaded) return;
+      if (fVid.classList.contains("hidden")) {
+        const t = videoDuration - rVid.currentTime;
+        fVid.currentTime = Math.max(0, Math.min(videoDuration, t));
+
+      }
+      if (fVid.currentTime == fVid.duration) {
+        cancelAnimationFrame(moveAnimation);
+        return
+      }
+      if (fVid.currentTime < fVid.duration) {
+        moveButtonContinuously("fVid");
+      }
+
+      fVid.play();
+      fVid.playbackRate = 4;
+
+
+      setTimeout(() => showForwardVideo(), 50);
+    }
+    function forwardStop() {
+      cancelAnimationFrame(moveAnimation);
+      fVid.pause();
+    }
+
+    /* Rewind Logic */
+    function rewindStart() {
+      if (!durationLoaded) return;
+      if (rVid.classList.contains("hidden")) {
+        const t = videoDuration - fVid.currentTime;
+        rVid.currentTime = Math.max(0, Math.min(videoDuration, t));
+      }
+
+      if (rVid.currentTime == rVid.duration) {
+        cancelAnimationFrame(moveAnimation);
+        return
+      }
+      if (rVid.currentTime < rVid.duration) {
+        moveButtonContinuously("rVid");
+      }
+
+      rVid.play();
+      rVid.playbackRate = 4;
+
+      setTimeout(() => showReverseVideo(), 60);
+    }
+    function rewindStop() {
+      cancelAnimationFrame(moveAnimation);
+      rVid.pause();
+    }
+
+    /* Desktop events */
+    playBtn.addEventListener("mousedown", forwardStart);
+    playBtn.addEventListener("mouseup", forwardStop);
+    playBtn.addEventListener("mouseleave", forwardStop);
+
+    rewindBtn.addEventListener("mousedown", rewindStart);
+    rewindBtn.addEventListener("mouseup", rewindStop);
+    rewindBtn.addEventListener("mouseleave", rewindStop);
+
+    /* Mobile events */
+    playBtn.addEventListener("touchstart", e => { e.preventDefault(); forwardStart(); });
+    playBtn.addEventListener("touchend", forwardStop);
+    playBtn.addEventListener("touchcancel", forwardStop);
+
+    rewindBtn.addEventListener("touchstart", e => { e.preventDefault(); rewindStart(); });
+    rewindBtn.addEventListener("touchend", rewindStop);
+    rewindBtn.addEventListener("touchcancel", rewindStop);
+
+    fVid.addEventListener("ended", () => {
+      cancelAnimationFrame(moveAnimation); // stop button movement
+      fVid.pause(); // ensure video is stopped
+    });
+    rVid.addEventListener("ended", () => {
+      cancelAnimationFrame(moveAnimation); // stop button movement
+      rVid.pause(); // ensure video is stopped
+    });
+
+
+    //
+  </script>
+</body>
+
+</html>
